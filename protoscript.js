@@ -20,8 +20,23 @@ ProtoScript may be freely distributed under the MIT license.
 	ProtoScript.VERSION = '0.0.1';
 
 	// DOM manipulation
-	ProtoScript.$ = root.jQuery || root.Zepto || root.ender || root.$;
+	ProtoScript.$ = root.jQuery || root.Zepto || root.$;
 
+	// bootstrap a dom manipulation library if we can't find one (jQuery default)
+	if (!ProtoScript.$) {
+		console.warn('ProtoScript warning: no DOM library found, attempting to add jQuery.');
+		var domLib = document.createElement('script');
+		domLib.setAttribute('type', 'text/javascript'); 
+		domLib.setAttribute('src', '//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.1/jquery.min.js');
+		domLib.onload = function(evt) {
+			console.log('jQuery loaded, good to go.');
+			// setTimeout(function() { ProtoScript.init(); }, 50);
+			ProtoScript.init();
+		}
+		document.body.appendChild(domLib);
+		
+
+	}
 	// directives = single line commands parsed into {source: (selector), handler: (action), event: (interaction)}
 	ProtoScript.directives = [];
 
@@ -30,10 +45,25 @@ ProtoScript may be freely distributed under the MIT license.
 	ProtoScript.preposition = ' on ';
 	// ProtoScript.conjunctions = ['and', 'or']; // ???
 
-	// find all <script> tags and parse their contents
+	// TODO - provide aliases for event names?
+
+
 	ProtoScript.init = function() {
+		this.$ = root.jQuery || root.Zepto || root.$;
+		if (!this.$) {;
+			return;
+		}
+		this.$(function(){
+		  ProtoScript.parseScripts();
+		})
+	}
+
+	// find all <script> tags and parse their contents
+	ProtoScript.parseScripts = function() {
+
 		this.scripts = this.$('script[type="text/protoscript"]');
-		// console.log('protoscript init:', this.scripts);
+		// console.log('protoscript parseScripts:', this.scripts);
+		var directivesRaw = [];
 		this.$.each(this.scripts, function(i, script){
 			// console.log(script.innerText.split('\n'));
 			var lines = script.innerText.split('\n');
@@ -42,14 +72,15 @@ ProtoScript may be freely distributed under the MIT license.
 				// line = line.replace(/^\s+/g, ""); // beginning whitespace
 				// line = line.replace(/\s+$/g, ""); // ending whitespace
 				// console.log(line + '.');
-				if (line.length > 0) return line;
+				if (line.length === 0) return;
+				return line;
 			});
 			
-			ProtoScript.directives = ProtoScript.directives.concat(lines);
+			directivesRaw = directivesRaw.concat(lines);
 			// console.log(ProtoScript.directives);
 		});
 		// now we have basic directives from each line in each script tag. Let's break them down.
-		this.directives = this.$.map(this.directives, function(directive, j) {
+		this.directives = this.$.map(directivesRaw, function(directive, j) {
 			// parse individual directives according to our template.
 			// fail out non-good ones here too
 			var verbIdx = directive.indexOf(ProtoScript.verb);
@@ -67,18 +98,24 @@ ProtoScript may be freely distributed under the MIT license.
 			return {full: directive, selector: selector, target: target, action: action, interaction: interaction}
 		});
 		// console.log(this.directives);
-		return this;
+		return this.observe();
 	}
 
 	// hook up some event handlers according to parsed directives.
 	ProtoScript.observe = function() {
 		this.$.each(this.directives, function(i, directive){
-			console.log('observing:', i, directive);
-
-			directive.target.on(directive.interaction, function(evt){
-				console.log(directive.action);
-				ProtoScript.callback(directive, ProtoScript.$(this));
-			});
+			// console.log('observing:', i, directive);
+			directive.target.css('cursor', 'pointer');
+			// check to see if directive.interaction == 'load'
+			if (directive.interaction === 'load') {
+				ProtoScript.callback(directive, directive.target);
+			} else {
+				directive.target.on(directive.interaction, function(evt){
+					console.log(directive.action);
+					ProtoScript.callback(directive, ProtoScript.$(this));
+				});	
+			}
+			
 
 		});
 
@@ -115,7 +152,7 @@ ProtoScript may be freely distributed under the MIT license.
 	ProtoScript.findTarget = function(target, extra) {
 		var origin = this.$(extra[0]).eq(0);
 		extra = Array.prototype.slice.call(extra, 0);
-		console.log(target, 'target extra:', extra, typeof extra);
+		// console.log(target, 'target extra:', extra, typeof extra);
 		// self should use origin which is the first item of extra arg. (because we unshift the directive.target)
 		if (target === 'self') return origin;
 
@@ -128,12 +165,12 @@ ProtoScript may be freely distributed under the MIT license.
 		if (target === 'previous') {
 			return origin.prev(extra[extra.indexOf(target) + 1]);
 		}
-
+		// check for extended selectors which might be space separated?
 		return this.$(target); // default case
 	}
 
 
-	// namespace our Actions handlers - provide mechanism for extending via 'plugins' of sorts
+	// namespace our Actions handlers - TODO provide mechanism for extending via 'plugins' of sorts
 	ProtoScript.Actions = {};
 
 	// a default set of basic actions.
@@ -153,6 +190,18 @@ ProtoScript may be freely distributed under the MIT license.
 		target.toggle();
 	}
 
+	ProtoScript.Actions.addclass = function(origin, className, target) {
+		target = this.findTarget(target, arguments); 
+		console.log('addclass:', target, className);
+		target.addClass(className.replace(/'/g, ""));
+	}
+
+	ProtoScript.Actions.removeclass = function(origin, className, target) {
+		target = this.findTarget(target, arguments); 
+		console.log('removeclass:', target, className);
+		target.removeClass(className.replace(/'/g, ""));
+	}
+
 	ProtoScript.Actions.toggleclass = function(origin, className, target) {
 		target = this.findTarget(target, arguments); 
 		target.toggleClass(className.replace(/'/g, ""));
@@ -167,12 +216,24 @@ ProtoScript may be freely distributed under the MIT license.
 	ProtoScript.Actions.load = function(origin, url, insertion, target) {
 		target = this.findTarget(target, arguments);
 		// insertion is only 'into' and we don't do anything yet with it - but could use before or after perhaps
-		console.log('load action:', target, url, insertion);
+		// console.log('load action:', target, url, insertion);
 		url = url.replace(/'/g, "");
-		target.load(url);
+		target.load(url); // TODO - ensure any matching selectors in the new content get hooked up - maybe a global 'unobserve' 'observe' refresh?
 	}
+
+
+	// todo - animations and transitions
+
+
 
 })(this);
 
-// automatically kick things off.
-this.ProtoScript.init().observe();
+// automatically kick things off. - TODO move to after DOM loaded event.
+this.ProtoScript.init();
+
+// sample extension of Actions to add custom one.
+window.ProtoScript.Actions.enlarge = function(origin, target) {
+	target = this.findTarget(target, arguments);
+	// do whatever you like here with the target DOM element.
+	target.css("font-size", "10em");
+}
