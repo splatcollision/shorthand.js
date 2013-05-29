@@ -132,9 +132,11 @@ ProtoScript may be freely distributed under the MIT license.
 		return this.$(target); // default case
 	}
 
+
 	// namespace our Actions handlers - provide mechanism for extending via 'plugins' of sorts
 	ProtoScript.Actions = {};
 
+	// a default set of basic actions.
 	ProtoScript.Actions.hide = function(origin, target) {
 		// convert arguments to an array?
 		target = this.findTarget(target, arguments); // handle 'next p' and 'self' issues here.
@@ -156,6 +158,7 @@ ProtoScript may be freely distributed under the MIT license.
 		target.toggleClass(className.replace(/'/g, ""));
 	}
 
+	// page navigation
 	ProtoScript.Actions.goto = function(origin, destination) {
 		root.location = destination.replace(/'/g, ""); // simple version
 	}
