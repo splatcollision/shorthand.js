@@ -1,4 +1,5 @@
 // protoscript.js
+
 /* 
 
 Author: Kevin Haggerty - kevin@splatcollision.com
@@ -6,20 +7,22 @@ Author: Kevin Haggerty - kevin@splatcollision.com
 (c) 2013 Kevin Haggerty, Splat Collision Web Industries, LLC.
 ProtoScript may be freely distributed under the MIT license.
 
+See 'README.md' for more details.
+
 */
 
-// (selector) should (action) on (interaction)
+
+
+
 
 (function(root){
 	
-
-
 	var ProtoScript;
 	ProtoScript = root.ProtoScript = {};
 
 	ProtoScript.VERSION = '0.0.1';
 
-	// DOM manipulation
+	// Find a compatible DOM manipulation library.
 	ProtoScript.$ = root.jQuery || root.Zepto || root.$;
 
 	// bootstrap a dom manipulation library if we can't find one (jQuery default)
@@ -29,30 +32,30 @@ ProtoScript may be freely distributed under the MIT license.
 		domLib.setAttribute('type', 'text/javascript'); 
 		domLib.setAttribute('src', '//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.1/jquery.min.js');
 		domLib.onload = function(evt) {
-			console.log('jQuery loaded, good to go.');
-			// setTimeout(function() { ProtoScript.init(); }, 50);
+			// console.log('jQuery loaded, good to go.');
 			ProtoScript.init();
 		}
 		document.body.appendChild(domLib);
-		
-
 	}
+
 	// directives = single line commands parsed into {source: (selector), handler: (action), event: (interaction)}
 	ProtoScript.directives = [];
 
 	// PRINCIPLE - simple natural language syntax to describe interactive behaviors - build complex behaviors simply.
 	ProtoScript.verb = ' should ';
 	ProtoScript.preposition = ' on ';
-	// ProtoScript.conjunctions = ['and', 'or']; // ???
 
 	// TODO - provide aliases for event names?
-
+	// ProtoScript.eventMap = {};
 
 	ProtoScript.init = function() {
+		// try to pick up the global DOM library again
 		this.$ = root.jQuery || root.Zepto || root.$;
-		if (!this.$) {;
+		if (!this.$) {
+			// we've got to fail here
 			return;
 		}
+		// call parseScripts once DOM load is complete.
 		this.$(function(){
 		  ProtoScript.parseScripts();
 		})
@@ -60,110 +63,123 @@ ProtoScript may be freely distributed under the MIT license.
 
 	// find all <script> tags and parse their contents
 	ProtoScript.parseScripts = function() {
-
+		// find our script blocks
 		this.scripts = this.$('script[type="text/protoscript"]');
 		// console.log('protoscript parseScripts:', this.scripts);
+		// collect directives
 		var directivesRaw = [];
+		// look at each script block
 		this.$.each(this.scripts, function(i, script){
-			// console.log(script.innerText.split('\n'));
+			// get each line of protoscript
 			var lines = script.innerText.split('\n');
+			// cleanup whitespace - trim each line and ignore empty lines
 			lines = ProtoScript.$.map(lines, function(line, i) {
 				line = line.trim();
-				// line = line.replace(/^\s+/g, ""); // beginning whitespace
-				// line = line.replace(/\s+$/g, ""); // ending whitespace
-				// console.log(line + '.');
 				if (line.length === 0) return;
 				return line;
 			});
-			
+			// collect each script block's lines into a single array
 			directivesRaw = directivesRaw.concat(lines);
-			// console.log(ProtoScript.directives);
 		});
-		// now we have basic directives from each line in each script tag. Let's break them down.
+		// now we have basic directives from each line in each script tag. 
+		// Let's break them down.
 		this.directives = this.$.map(directivesRaw, function(directive, j) {
 			// parse individual directives according to our template.
-			// fail out non-good ones here too
+			// find indexes of main grammar elements
 			var verbIdx = directive.indexOf(ProtoScript.verb);
 			var prepIdx = directive.indexOf(ProtoScript.preposition);
-			// console.log(directive, verbIdx, prepIdx);
+			// find the main selector
 			var selector = directive.substring(0, verbIdx).trim();
+			// find the action
 			var action = directive.substring(verbIdx, prepIdx).replace(ProtoScript.verb.trim(), "").trim();
+			// find the interaction event
 			var interaction = directive.substring(prepIdx, directive.length).replace(ProtoScript.preposition.trim(), "").trim();
-			// check DOM for presence of selector - main test for failure of the directive
+			// check the DOM for the presence of selector - main test for failure of the directive
+			// PRINCIPLE - be tolerant of garbage input.
 			var target = ProtoScript.$(selector);
 			if (target.length === 0) {
 				console.warn('ProtoScript warning: No valid target found, a directive will be ignored: "' + directive + '"');
-				return; // PRINCIPLE - be tolerant of garbage input.
+				return; 
 			}
+			// return an object containing the elements of a protoscript directive.
 			return {full: directive, selector: selector, target: target, action: action, interaction: interaction}
 		});
-		// console.log(this.directives);
+		// call the 'observe' method and return this object.
 		return this.observe();
 	}
 
-	// hook up some event handlers according to parsed directives.
+	// 'observe()' - hook up event handlers according to parsed directives.
 	ProtoScript.observe = function() {
 		this.$.each(this.directives, function(i, directive){
-			// console.log('observing:', i, directive);
+			// add a pointer cursor so we know it's interactive!
 			directive.target.css('cursor', 'pointer');
-			// check to see if directive.interaction == 'load'
+			// check for custom 'load' event
 			if (directive.interaction === 'load') {
+				// if it's a load event, we can just call the action right away.
 				ProtoScript.callback(directive, directive.target);
 			} else {
+				// set up the event observer normally.
 				directive.target.on(directive.interaction, function(evt){
-					console.log(directive.action);
+					// callback gets the main directive object and the element which is source of the event (source selector)
 					ProtoScript.callback(directive, ProtoScript.$(this));
 				});	
 			}
 			
 
 		});
-
+		// return this for chaining.
 		return this;
 	}
 
-	// needs a better name - 'action handler heh'
+	// 'callback()' (needs a better name?) - routes user interactions to ProtoScript.Actions
 	ProtoScript.callback = function(directive, origin) {
 		// console.log('callback source:', origin);
-
-		// let's parse the directive.action - split by words?
-		// check for 'and'...
+		// we parse directive.action on demand here.
+		// split multiple actions on the 'and' keyword.
 		var actions = directive.action.split(' and ');
-		// now perform all actions
+		// now perform all the actions
 		actions.forEach(function(action){
+			// separate actions into individual arguments
 			var args = action.split(' ');
 			// console.log('doing:', args);
-			// args[0] is our action identifier, other parts of the action should be sent as arguments
+			// args[0] is our action identifier, the other parts of the action should be sent as arguments to the Action functions.
 			var action = args.shift();
+			// check to be sure we have a matching action - provide some feedback so mistakes can be corrected.
 			if (!ProtoScript.Actions[action]) {
 				console.warn('ProtoScript warning: no Action found for "' + action + '"');
 				return;
 			}
-			// unshift the origin of this callback so we can use 'self' keyword for actions
+			// unshift the origin of this callback so we can use 'self' keyword for actions.
 			args.unshift(origin);
+
+			// if target is always the last item in args maybe we can findTarget before calling the actions
+			// makes extending actions cleaner...
+
+			// now call the Action function, applying the args array as individual arguments.
 			ProtoScript.Actions[action].apply(ProtoScript, args);
 		});
-		
-		// first part of action
-
 	}
 
-	// turn 'self' or 'next p' into real selectors - return $ element
+	// 'findTarget()' turn 'self' or 'next p' into real selectors - return $ element
 	ProtoScript.findTarget = function(target, extra) {
 		var origin = this.$(extra[0]).eq(0);
 		extra = Array.prototype.slice.call(extra, 0);
+		var targetSelectorIdx = extra.indexOf(target) + 1;
+		var targetSelector;
+		if (extra.length-1 >= targetSelectorIdx) targetSelector = extra[targetSelectorIdx];
 		// console.log(target, 'target extra:', extra, typeof extra);
 		// self should use origin which is the first item of extra arg. (because we unshift the directive.target)
-		if (target === 'self') return origin;
+		if ((target === 'self') || (target === 'itself')) return origin;
 
 		// check for 'next' or 'previous' keywords in the target
 		if (target === 'next') {
 			// find index of target in extra, selector to use for next is in the index + 1 position
-			return origin.next(extra[extra.indexOf(target) + 1]);
+			// TODO support plain 'next' without another selector
+			return origin.next(targetSelector);
 		}
 
 		if (target === 'previous') {
-			return origin.prev(extra[extra.indexOf(target) + 1]);
+			return origin.prev(targetSelector);
 		}
 		// check for extended selectors which might be space separated?
 		return this.$(target); // default case
@@ -228,7 +244,7 @@ ProtoScript may be freely distributed under the MIT license.
 
 })(this);
 
-// automatically kick things off. - TODO move to after DOM loaded event.
+// For now, automatically kick things off.
 this.ProtoScript.init();
 
 // sample extension of Actions to add custom one.
