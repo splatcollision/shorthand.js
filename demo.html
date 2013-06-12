@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Edit Room | ShortHandJS</title>
+    <title>ShortHandJS Demo Page</title>
 
   
 <style>
@@ -67,7 +67,7 @@ body {
 	-moz-transform: matrix(1, 0, 0, 1, 0px, 0px);
 	}
 
-#screen_container_658 > #layer4463 {
+#screen_container_658 > #visibility {
 	width: 58.791302428626125%;
 	height: auto;
 	left: 15.327190979273238%;
@@ -115,7 +115,7 @@ body {
 	-moz-transform: matrix(1, 0, 0, 1, 0px, 0px);
 	}
 
-#screen_container_658 > #layer4470 {
+#screen_container_658 > #classdemo {
 	width: 65.41808360305535%;
 	height: auto;
 	left: 15.327191352844238%;
@@ -150,7 +150,7 @@ body {
 	border-radius : 16px;
 	}
 
-#screen_container_658 > #layer4472 {
+#screen_container_658 > #ajaxdemo {
 	left: 15.327191352844238%;
 	top: 66px;
 	font-family: sans-serif;
@@ -195,7 +195,9 @@ body {
 	}
 
 
-
+.selected {
+	border: 5px dotted red;
+}
 
 /* END CSS */
 </style>
@@ -208,23 +210,33 @@ body {
   <div id="screen_container_658">
   <header id='layer4462' data='4462'><h1>ShortHand.js Demo Page.</h1>
 
-<p>ShortHand is a quickie framework and interpreted syntax for rapid interaction prototyping.</p></header><section id='layer4467' data='4467'><p>Particpate on GitHub!</p></section><section id='layer4463' data='4463'><p>Show / Hide / Toggle visibility.</p>
+<p>ShortHand is a quickie framework and interpreted syntax for rapid interaction prototyping.</p>
+
+</header>
+
+<a href="https://github.com/splatcollision/shorthand.js"><section id='layer4467' data='4467'><p>Particpate on GitHub!</p></section></a>
+
+<section id='visibility' data='4463'><p>Show / Hide / Toggle visibility.</p>
 
 <h2>#visibility&gt;h2 should hide next ul on click</h2>
 
 <ul>
 <li>This list will be hidden when clicking above</li>
 <li>and shown when clicking below</li>
-</ul><h3>#visibility&gt;h3 should show next ul on click</h3></section><section id='layer4470' data='4470'><p>Add / Remove / Toggle CSS classes.</p>
+</ul><h3>#visibility&gt;h3 should show previous ul on click</h3></section>
+
+<section id='classdemo' data='4470'><p>Add / Remove / Toggle CSS classes.</p>
 
 <h2>#classdemo&gt;h2 should addclass 'selected' next ul on click</h2>
 
 <ul>
 <li>This list will get selected when clicking above</li>
 <li>and de-selected when clicking below</li>
-</ul><h3>#classdemo&gt;h3 should removeclass 'selected' previous ul on click</h3></section><section id='layer4472' data='4472'><p>AJAX and Links.</p>
+</ul><h3>#classdemo&gt;h3 should removeclass 'selected' previous ul on click</h3></section>
 
-<h2>#ajaxdemo&gt;h2 should load 'details.html' next div on click</h2>
+<section id='ajaxdemo' data='4472'><p>AJAX and Links.</p>
+
+<h2>#ajaxdemo&gt;h2 should load 'chunk.html' into next div on click</h2>
 
 <div>This will be replaced.</div>
 
@@ -232,6 +244,25 @@ body {
 <h3>#ajaxdemo&gt;h3 should goto 'http://edit-room.com' on click</h3></section>
   </div>
   
+  <!-- Shorthand.js -->
+  <script src="Shorthand.js" type="text/javascript"></script>
+  <!-- Shorthand blocks -->
+  <script type="text/Shorthand">
+
+    #visibility>h2 should hide next ul on click
+
+    #visibility>h3 should show previous ul on click
+
+ 	#classdemo>h2 should addclass 'selected' next ul on click
+
+ 	#classdemo>h3 should removeclass 'selected' previous ul on click
+
+ 	#ajaxdemo>h2 should load 'chunk.html' into next div on click
+
+ 	#ajaxdemo>h3 should goto 'http://edit-room.com' on click
+
+  </script>
+
     
   </body>
 </html>
