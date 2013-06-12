@@ -1,33 +1,33 @@
-# ProtoScript.js
+# Shorthand.js
 
 #### A lightweight, natural language syntax for describing interactive behaviors for the web.
 
-ProtoScript is intended for quickly prototyping behaviors in HTML mockups. The idea is to quickly test out user interactions without investing tons of time in custom JavaScript programming. ProtoScript should get you 80% of the way to a functional 'web thang', without the headaches of jQuery spaghetti code.
+Shorthand is intended for quickly prototyping behaviors in HTML mockups. The idea is to quickly test out user interactions without investing tons of time in custom JavaScript programming. Shorthand should get you 80% of the way to a functional 'web thang', without the headaches of jQuery spaghetti code.
 
-ProtoScript statements all follow a simple basic syntax:
+Shorthand statements all follow a simple basic syntax:
 
     (selector) should (do an action) on (user interaction)
 
 ## Setup
 
-Setup is easy - just include the base protoscript.js file anywhere in your page, and then add custom &lt;SCRIPT&gt; blocks for your ProtoScript statements
+Setup is easy - just include the base Shorthand.js file anywhere in your page, and then add custom &lt;SCRIPT&gt; blocks for your Shorthand statements
 
-ProtoScript requires a jQuery-compatable DOM manipulation to be loaded in the page for it to work. You can include your preferred library (Zepto.js!) and ProtoScript will use whatever's available. If none is available, ProtoScript will load the latest version jQuery (from cdnjs) for itself.
+Shorthand requires a jQuery-compatable DOM manipulation to be loaded in the page for it to work. You can include your preferred library (Zepto.js!) and Shorthand will use whatever's available. If none is available, Shorthand will attempt to load the latest version jQuery (from cdnjs) for itself.
 
 	<!-- Step 0: Include a specific DOM library, or not. -->
 	<script src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js" type="text/javascript"></script>
 
-    <!-- Step 1: Include protoscript.js -->
-    <script src="protoscript.js" type="text/javascript"></script>
+    <!-- Step 1: Include Shorthand.js -->
+    <script src="Shorthand.js" type="text/javascript"></script>
 
-    <!-- Step 2: Add <script type='text/protoscript'> blocks -->
-    <script type="text/protoscript"> 
+    <!-- Step 2: Add <script type='text/Shorthand'> blocks -->
+    <script type="text/shorthand"> 
     	
-    	Step 3: write ProtoScript!
+    	Step 3: write Shorthand!
     	
     	Note that anything that doesn't match the syntax is ignored, so if you want to write out some comments like these you can.
 
-    	Here's an example of a valid ProtoScript statement that will show an element with id='dialog' when the element with id='button' is clicked:
+    	Here's an example of a valid Shorthand statement that will show an element with id='dialog' when the element with id='button' is clicked:
 
     	#button should show #dialog on click
 
@@ -41,13 +41,13 @@ ProtoScript requires a jQuery-compatable DOM manipulation to be loaded in the pa
 
 You can use any kind of CSS or jQuery-compatible selectors to specify which elements in your mockup should receive the intended behaviors - ID, class, tag name, whatever you like.
 
-The only limitation on selectors is that they should not contain whitespace. So if you want to use a hierarchical selector like 'section > h1' simply write it as 'section>h1' and ProtoScript will apply the behaviors to the correct elements as intended.
+The only limitation on selectors is that they should not contain whitespace. So if you want to use a hierarchical selector like 'section > h1' simply write it as 'section>h1' and Shorthand will apply the behaviors to the correct elements as intended.
 
 ## Actions
 
 This is the good stuff.
 
-The first word after 'should' in your statement should be one of the valid actions. (There will be more, and it's easy to extend ProtoScript's actions to add custom ones, if you're interested.)
+The first word after 'should' in your statement should be one of the valid actions. (There will be more, and it's easy to extend Shorthand's actions to add custom ones, if you're interested.)
 
 Supported Actions:
 
@@ -73,7 +73,7 @@ Target selectors describe the intended target for the action.  They can be vanil
 
 ### Chaining with 'and'
 
-Here's the really good stuff: you can chain multiple actions on a single main selector by simply using the 'and' keyword in your ProtoScript statement.
+Here's the really good stuff: you can chain multiple actions on a single main selector by simply using the 'and' keyword in your Shorthand statement.
 
     #button should toggle #dialog and toggleclass 'active' self and load 'dialog.html' #dialog>.content on click
 
@@ -82,7 +82,7 @@ See what I did there?
 
 ## Events
 
-The last part of a ProtoScript statement is the event that triggers the Action.
+The last part of a Shorthand statement is the event that triggers the Action.
 
 Events follow the 'on eventname' syntax, and eventname can be any valid DOM event, such as 'click', 'mouseover', 'mouseleave', 'touchstart', etc.
 
@@ -97,13 +97,13 @@ You can also specify that events happen on page load, by simply adding 'on load'
 MIT.
 
 
-## Extending ProtoScript
+## Extending Shorthand
 
-There's a simple way to use JavaScript to add custom actions to ProtoScript's default library of actions.
+There's a simple way to use JavaScript to add custom actions to Shorthand's default library of actions.
 
 In your own javascript:
 
-    window.ProtoScript.Actions.enlarge = function(origin, target) {
+    window.Shorthand.Actions.enlarge = function(origin, target) {
     	target = this.findTarget(target, arguments); // this is required for the magic target selectors to work, like 'self', 'next', and 'previous'
     	// After that line, you can do whatever you like here with the target DOM element.
     	target.css("font-size", "10em");
@@ -115,9 +115,9 @@ If you develop useful Actions, please consider sending a pull request, and I'd b
 
 I'd like to add a few things, and am open to contributions.
 
-#### Server-side generation of JavaScript from ProtoScript statements.
+#### Server-side generation of JavaScript from Shorthand statements.
 
-Ideally ProtoScript could be run (via node.js) as part of a build script, and instead of evaluating statements and adding event handlers in-browser, the same statements could be used to generate an application skeleton of some kind.
+Ideally Shorthand could be run (via node.js) as part of a build script, and instead of evaluating statements and adding event handlers in-browser, the same statements could be used to generate an application skeleton of some kind.
 
 #### Animation and Transition Actions
 
