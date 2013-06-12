@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Shorthand.js by splatcollision</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Shorthand.js</h1>
+        <p>shorthand.js - a lightweight framework and syntax for prototyping common web interactions</p>
+
+        <p class="view"><a href="https://github.com/splatcollision/shorthand.js">View the Project on GitHub <small>splatcollision/shorthand.js</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/splatcollision/shorthand.js/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/splatcollision/shorthand.js/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/splatcollision/shorthand.js">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="shorthandjs" class="anchor" href="#shorthandjs"><span class="octicon octicon-link"></span></a>Shorthand.js</h1>
+
+<h4>
+<a name="a-lightweight-natural-language-syntax-for-describing-interactive-behaviors-for-the-web" class="anchor" href="#a-lightweight-natural-language-syntax-for-describing-interactive-behaviors-for-the-web"><span class="octicon octicon-link"></span></a>A lightweight, natural language syntax for describing interactive behaviors for the web.</h4>
+
+<p>Shorthand is intended for quickly prototyping behaviors in HTML mockups. The idea is to quickly test out user interactions without investing tons of time in custom JavaScript programming. Shorthand should get you 80% of the way to a functional 'web thang', without the headaches of jQuery spaghetti code.</p>
+
+<p>Shorthand statements all follow a simple basic syntax:</p>
+
+<pre><code>(selector) should (do an action) on (user interaction)
+</code></pre>
+
+<h2>
+<a name="demo" class="anchor" href="#demo"><span class="octicon octicon-link"></span></a>DEMO</h2>
+
+<p><a href="demo.html">Here's a simple demo page so you can see ShortHand in action.</a></p>
+
+<h2>
+<a name="setup" class="anchor" href="#setup"><span class="octicon octicon-link"></span></a>Setup</h2>
+
+<p>Setup is easy - just include the base Shorthand.js file anywhere in your page, and then add custom &lt;SCRIPT&gt; blocks for your Shorthand statements</p>
+
+<p>Shorthand requires a jQuery-compatable DOM manipulation to be loaded in the page for it to work. You can include your preferred library (Zepto.js!) and Shorthand will use whatever's available. If none is available, Shorthand will attempt to load the latest version jQuery (from cdnjs) for itself.</p>
+
+<pre><code>&lt;!-- Step 0: Include a specific DOM library, or not. --&gt;
+&lt;script src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js" type="text/javascript"&gt;&lt;/script&gt;
+
+&lt;!-- Step 1: Include Shorthand.js --&gt;
+&lt;script src="Shorthand.js" type="text/javascript"&gt;&lt;/script&gt;
+
+&lt;!-- Step 2: Add &lt;script type='text/Shorthand'&gt; blocks --&gt;
+&lt;script type="text/shorthand"&gt; 
+
+    Step 3: write Shorthand!
+
+    Note that anything that doesn't match the syntax is ignored, so if you want to write out some comments like these you can.
+
+    Here's an example of a valid Shorthand statement that will show an element with id='dialog' when the element with id='button' is clicked:
+
+    #button should show #dialog on click
+
+    And here's a statement that will hide that dialog when the element with class='closebox' inside that dialog.
+
+    #dialog&gt;.closebox should hide #dialog on click
+
+&lt;/script&gt;
+</code></pre>
+
+<h2>
+<a name="selectors" class="anchor" href="#selectors"><span class="octicon octicon-link"></span></a>Selectors</h2>
+
+<p>You can use any kind of CSS or jQuery-compatible selectors to specify which elements in your mockup should receive the intended behaviors - ID, class, tag name, whatever you like.</p>
+
+<p>The only limitation on selectors is that they should not contain whitespace. So if you want to use a hierarchical selector like 'section &gt; h1' simply write it as 'section&gt;h1' and Shorthand will apply the behaviors to the correct elements as intended.</p>
+
+<h2>
+<a name="actions" class="anchor" href="#actions"><span class="octicon octicon-link"></span></a>Actions</h2>
+
+<p>This is the good stuff.</p>
+
+<p>The first word after 'should' in your statement should be one of the valid actions. (There will be more, and it's easy to extend Shorthand's actions to add custom ones, if you're interested.)</p>
+
+<p>Supported Actions:</p>
+
+<ul>
+<li>toggle (target selector)</li>
+<li>hide (target selector)</li>
+<li>show (target selector)</li>
+<li>toggleclass 'classname' (target selector)</li>
+<li>addclass 'classname' (target selector)</li>
+<li>removeclass 'classname' (target selector)</li>
+<li>goto 'url'</li>
+<li>load 'ajax url' (target selector)</li>
+<li>
+<strong>more are on the way</strong> - I'd like to add animations and transitions at the very least.</li>
+</ul><p>The word after the action is usually another selector to describe the target for the action. Sometimes it's a valid URL, as in the 'goto' or 'load' actions.</p>
+
+<h3>
+<a name="target-selectors" class="anchor" href="#target-selectors"><span class="octicon octicon-link"></span></a>Target Selectors</h3>
+
+<p>Target selectors describe the intended target for the action.  They can be vanilla CSS selectors like the main selector, or one of the special ones.</p>
+
+<ul>
+<li>self/itself           -- targets the main source selector of the statement.</li>
+<li>next (selector)       -- targets the element(s) next to the source element, optionally filtered by a provided selector.</li>
+<li>previous (selector)   -- targets the element(s) previous to the source element, again filtered by an optional selector.</li>
+</ul><h3>
+<a name="chaining-with-and" class="anchor" href="#chaining-with-and"><span class="octicon octicon-link"></span></a>Chaining with 'and'</h3>
+
+<p>Here's the really good stuff: you can chain multiple actions on a single main selector by simply using the 'and' keyword in your Shorthand statement.</p>
+
+<pre><code>#button should toggle #dialog and toggleclass 'active' self and load 'dialog.html' #dialog&gt;.content on click
+</code></pre>
+
+<p>See what I did there?</p>
+
+<h2>
+<a name="events" class="anchor" href="#events"><span class="octicon octicon-link"></span></a>Events</h2>
+
+<p>The last part of a Shorthand statement is the event that triggers the Action.</p>
+
+<p>Events follow the 'on eventname' syntax, and eventname can be any valid DOM event, such as 'click', 'mouseover', 'mouseleave', 'touchstart', etc.</p>
+
+<h3>
+<a name="page-load-events" class="anchor" href="#page-load-events"><span class="octicon octicon-link"></span></a>Page Load Events</h3>
+
+<p>You can also specify that events happen on page load, by simply adding 'on load'.  This is great for handling initial setup of complex states, like hiding elements that will later be revealed.</p>
+
+<pre><code>#dialog should hide itself on load
+</code></pre>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>MIT.</p>
+
+<h2>
+<a name="extending-shorthand" class="anchor" href="#extending-shorthand"><span class="octicon octicon-link"></span></a>Extending Shorthand</h2>
+
+<p>There's a simple way to use JavaScript to add custom actions to Shorthand's default library of actions.</p>
+
+<p>In your own javascript:</p>
+
+<pre><code>window.Shorthand.Actions.enlarge = function(origin, target) {
+    target = this.findTarget(target, arguments); // this is required for the magic target selectors to work, like 'self', 'next', and 'previous'
+    // After that line, you can do whatever you like here with the target DOM element.
+    target.css("font-size", "10em");
+}
+</code></pre>
+
+<p>If you develop useful Actions, please consider sending a pull request, and I'd be happy to include them in the defaults!</p>
+
+<h2>
+<a name="roadmap" class="anchor" href="#roadmap"><span class="octicon octicon-link"></span></a>Roadmap</h2>
+
+<p>I'd like to add a few things, and am open to contributions.</p>
+
+<h4>
+<a name="server-side-generation-of-javascript-from-shorthand-statements" class="anchor" href="#server-side-generation-of-javascript-from-shorthand-statements"><span class="octicon octicon-link"></span></a>Server-side generation of JavaScript from Shorthand statements.</h4>
+
+<p>Ideally Shorthand could be run (via node.js) as part of a build script, and instead of evaluating statements and adding event handlers in-browser, the same statements could be used to generate an application skeleton of some kind.</p>
+
+<h4>
+<a name="animation-and-transition-actions" class="anchor" href="#animation-and-transition-actions"><span class="octicon octicon-link"></span></a>Animation and Transition Actions</h4>
+
+<p>A library of simple canned animations useful for mockups? Yes please!</p>
+
+<p>These would go something like this:</p>
+
+<pre><code>#button1 should animate 'slideleftin' #panel1 on click
+
+#button2 should animate 'slideleftout' #panel2 on click
+</code></pre>
+
+<p>I'm still figuring out a good syntax for describing these...</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/splatcollision">splatcollision</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
