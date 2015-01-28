@@ -11,31 +11,75 @@ See 'README.md' for more details.
 
 */
 
+// optional AMD https://github.com/umdjs/umd/blob/master/amdWeb.js
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['jquery'], factory);
+    } else {
+        // Browser globals
+        root.ShortHand = factory(root, root.jQuery);
+    }
+}(this, function (root, $) {
+ 	"use strict";
 
+	var ShortHand = {};
 
-
-
-(function(root){
-	
-	var ShortHand;
-	ShortHand = root.ShortHand = {};
-
-	ShortHand.VERSION = '0.0.1';
+	ShortHand.VERSION = '0.1.0';
 
 	// Find a compatible DOM manipulation library.
-	ShortHand.$ = root.jQuery || root.Zepto || root.$;
+	ShortHand.$ = $; // root.jQuery || root.Zepto || root.$;
 
+
+	// mini resource loaders
+	function loadScript(src, func) {
+		var scripttag = document.createElement('script');
+		scripttag.setAttribute('type', 'text/javascript'); 
+		scripttag.setAttribute('src', src);
+		if (func) scripttag.onload = func;
+		document.body.appendChild(scripttag);
+	}
+
+	function loadStyle(src, func) {
+		var stylesheet = document.createElement('link');
+		stylesheet.setAttribute('rel', 'stylesheet'); 
+		stylesheet.setAttribute('href', src);
+		if (func) stylesheet.onload = func;
+		document.head.appendChild(stylesheet);
+	}
+
+	function loadModuleIncludes(includes) {
+		console.log('loadModuleIncludes:', includes.css, includes.js);
+		// includes.css [] loadStyle
+		if (includes.css) {
+			for (var i in includes.css) {
+				loadStyle(includes.css[i]);
+			}
+		}
+		// includes.js [] loadScript
+		if (includes.js) {
+			for (var j in includes.js) {
+				loadScript(includes.js[j]);
+			}
+		}
+	}
+
+	function loadModuleActions(actions) {
+		// assocaite each key with a this.Actions handler
+		for (var actionKey in actions) {
+			// console.log('actionKey:', actionKey, actions[actionKey]);
+			if (typeof actions[actionKey] === 'function') {
+				ShortHand.Actions[actionKey] = actions[actionKey];
+			}
+		}
+	}
 	// bootstrap a dom manipulation library if we can't find one (jQuery default)
 	if (!ShortHand.$) {
 		console.warn('ShortHand warning: no DOM library found, attempting to add jQuery.');
-		var domLib = document.createElement('script');
-		domLib.setAttribute('type', 'text/javascript'); 
-		domLib.setAttribute('src', '//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.1/jquery.min.js');
-		domLib.onload = function(evt) {
-			// console.log('jQuery loaded, good to go.');
+		loadScript('//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.1/jquery.min.js', function(){
+			console.log('jQuery loaded, good to go.');
 			ShortHand.init();
-		}
-		document.body.appendChild(domLib);
+		});
 	}
 
 	// directives = single line commands parsed into {source: (selector), handler: (action), event: (interaction)}
@@ -44,6 +88,9 @@ See 'README.md' for more details.
 	// PRINCIPLE - simple natural language syntax to describe interactive behaviors - build complex behaviors simply.
 	ShortHand.verb = ' should ';
 	ShortHand.preposition = ' on ';
+	ShortHand.helperverb = ' be ';
+	ShortHand.optionword = ' with ';
+	// TODO also support better this grammar: #selector should be actiony with options
 
 	// TODO - provide aliases for event names?
 	// ShortHand.eventMap = {};
@@ -51,14 +98,31 @@ See 'README.md' for more details.
 	ShortHand.init = function() {
 		// try to pick up the global DOM library again
 		this.$ = root.jQuery || root.Zepto || root.$;
+		console.log('do we have jquery:', this.$);
 		if (!this.$) {
 			// we've got to fail here
 			return;
 		}
+		// TODO check query params on our script element for additional modules
+		// animate module should load animate.css from cdn and enable > animate "slideOutUp" #target on click
+		this.initModules();
 		// call parseScripts once DOM load is complete.
 		this.$(function(){
 		  ShortHand.parseScripts();
 		})
+	}
+
+
+	ShortHand.initModules = function() {
+		console.log('modules check:', this.Modules);
+		for (var mod in this.Modules) {
+			console.log('module:', this.Modules[mod]);
+			var module = this.Modules[mod];
+			var actions = module.actions;
+			var includes = module.includes;
+			if (includes) loadModuleIncludes(includes);
+			if (actions) loadModuleActions(actions);
+		}
 	}
 
 	// find all <script> tags and parse their contents
@@ -88,15 +152,34 @@ See 'README.md' for more details.
 			// find indexes of main grammar elements
 			var verbIdx = directive.indexOf(ShortHand.verb);
 			var prepIdx = directive.indexOf(ShortHand.preposition);
+			var optionsIdx = directive.indexOf(ShortHand.optionword);
 			// find the main selector
-			var selector = directive.substring(0, verbIdx).trim();
-			// find the action
-			var action = directive.substring(verbIdx, prepIdx).replace(ShortHand.verb.trim(), "").trim();
-			// find the interaction event
-			var interaction = directive.substring(prepIdx, directive.length).replace(ShortHand.preposition.trim(), "").trim();
+			var selector = directive.substring(0, verbIdx).trim(), action, interaction, actionOptions, target;
+
+			if (selector.indexOf('//') > -1) return; // support js style comments
+
+			// if no prepIdx then there is no 'on' action -- 
+			if (prepIdx === -1) {
+				// alternate 'be' format of #selector should be draggable
+				action = directive.substring(verbIdx, directive.length).replace(ShortHand.verb.trim(), "").trim();
+				actionOptions = directive.substring(optionsIdx, directive.length);
+			} else {
+				// find the action & interaction
+				action = directive.substring(verbIdx, prepIdx).replace(ShortHand.verb.trim(), "").trim();	
+				interaction = directive.substring(prepIdx, directive.length).replace(ShortHand.preposition.trim(), "").trim();
+			}
+			
+			// find the interaction event - BUGGY if a target has 'on' like 'container'
+			
 			// check the DOM for the presence of selector - main test for failure of the directive
 			// PRINCIPLE - be tolerant of garbage input.
-			var target = ShortHand.$(selector);
+			console.log("directive:", directive, verbIdx, prepIdx);
+			console.log("selector:", selector);
+			console.log("should:", action);
+			console.log("interaction:", interaction);
+			console.log("options:", actionOptions);
+			target = ShortHand.$(selector);
+
 			if (target.length === 0) {
 				console.warn('ShortHand warning: No valid target found, a directive will be ignored: "' + directive + '"');
 				return; 
@@ -104,6 +187,7 @@ See 'README.md' for more details.
 			// return an object containing the elements of a ShortHand directive.
 			return {full: directive, selector: selector, target: target, action: action, interaction: interaction}
 		});
+		console.log('directives:', this.directives);
 		// call the 'observe' method and return this object.
 		return this.observe();
 	}
@@ -117,6 +201,16 @@ See 'README.md' for more details.
 			if (directive.interaction === 'load') {
 				// if it's a load event, we can just call the action right away.
 				ShortHand.callback(directive, directive.target);
+			} else if (directive.action.indexOf('be') === 0) {
+				console.log('be type interaction:', directive.action );
+				directive.action = directive.action.replace('be', '').trim();
+				// if ShortHand.Actions[directive.action]
+				console.log('be type interaction:', directive.action, ShortHand.Actions[directive.action] );
+				if (ShortHand.Actions[directive.action]) {
+					// directly call the action
+					// ShortHand.callback(directive, ShortHand.$(directive.selector));
+					ShortHand.Actions[directive.action].apply(ShortHand, [ShortHand.$(directive.selector), directive]);
+				}
 			} else {
 				// set up the event observer normally.
 				directive.target.on(directive.interaction, function(evt){
@@ -185,6 +279,66 @@ See 'README.md' for more details.
 		return this.$(target); // default case
 	}
 
+	// module defs
+	ShortHand.Modules = {};
+
+	ShortHand.Modules.animate = {
+		includes: {
+			css: ["//cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css"]
+		},
+		actions: {
+			"animate": function(origin, animationName, target) {
+				console.log('testing animate:', origin, animationName, target);
+				target = this.findTarget(target, arguments);
+				var animClasses = 'animated ' + animationName.replace(/'/g, "");
+				// addClass animate + other thing
+				// oh repeatable heyyyy
+				target.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(evt){
+					// $(this);
+					ShortHand.$(evt.target).removeClass(animClasses);
+				});
+				// do the add
+				target.show().addClass(animClasses);
+				
+			}
+			// might try to do variants which would set hidden before/after state of target
+		}
+	}
+	ShortHand.Modules.interactjs = {
+		includes: {
+			js: ["//cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.2/interact.min.js"]
+		},
+		// draggable "be draggable"
+		actions: {
+			"draggable": function(origin, directive) {
+				console.log('testing drag:', origin, directive);
+				// target = this.findTarget(target, arguments);
+				if (!interact) return console.warn('no interact.js');
+				interact(directive.selector).draggable({
+					// call this function on every dragmove event
+					    onmove: function (event) {
+					      var target = event.target,
+					          // keep the dragged position in the data-x/data-y attributes
+					          x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+					          y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+					      // translate the element
+					      target.style.webkitTransform =
+					      target.style.transform =
+					        'translate(' + x + 'px, ' + y + 'px)';
+
+					      // update the posiion attributes
+					      target.setAttribute('data-x', x);
+					      target.setAttribute('data-y', y);
+					    }
+				});
+				
+			}
+		}
+		// drop zone "should be draggable with drop zone #target"
+		// snappable "should be draggable with snapping"
+		// resizing: "should be resizeable" hmmm
+	}
 
 	// namespace our Actions handlers - TODO provide mechanism for extending via 'plugins' of sorts
 	ShortHand.Actions = {};
@@ -239,17 +393,16 @@ See 'README.md' for more details.
 
 
 	// todo - animations and transitions
+    return ShortHand;
+}));
 
 
+// // For now, automatically kick things off.
+// this.ShortHand.init();
 
-})(this);
-
-// For now, automatically kick things off.
-this.ShortHand.init();
-
-// sample extension of Actions to add custom one.
-window.ShortHand.Actions.enlarge = function(origin, target) {
-	target = this.findTarget(target, arguments);
-	// do whatever you like here with the target DOM element.
-	target.css("font-size", "10em");
-}
+// // sample extension of Actions to add custom one.
+// window.ShortHand.Actions.enlarge = function(origin, target) {
+// 	target = this.findTarget(target, arguments);
+// 	// do whatever you like here with the target DOM element.
+// 	target.css("font-size", "10em");
+// }

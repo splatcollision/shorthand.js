@@ -1,0 +1,26 @@
+{
+  "name": "shorthandjs",
+  "version": "0.1.0",
+  "authors": [
+    "(Kevin Haggerty <kevin@splatcollision.com>)"
+  ],
+  "description": "A lightweight, natural language syntax for describing interactive behaviors for the web.",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "jquery",
+    "prototyping",
+    "javascript",
+    "mockups"
+  ],
+  "license": "(MIT)",
+  "homepage": "http://splatcollision.github.io/shorthand.js/",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
