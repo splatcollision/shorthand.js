@@ -35,6 +35,14 @@ Shorthand requires a jQuery-compatable DOM manipulation to be loaded in the page
 
     	#dialog>.closebox should hide #dialog on click
 
+        Or how about leveraging the awesome [animate.css](http://daneden.github.io/animate.css/)?
+
+        #header1 should animate 'bounceInDown' #section1 on click 
+
+        What about using [interact.js](http://interactjs.io/) to support drag and drop and resizing?
+
+        #container1 should be draggable and resizeable
+
     </script>
 
 ## Selectors
@@ -59,7 +67,9 @@ Supported Actions:
 * removeclass 'classname' (target selector)
 * goto 'url'
 * load 'ajax url' (target selector)
-* **more are on the way** - I'd like to add animations and transitions at the very least.
+* animate 'animate.css class name' (target selector) -- new!
+* be draggable  -- new!
+* be resizeable  -- new!
 
 The word after the action is usually another selector to describe the target for the action. Sometimes it's a valid URL, as in the 'goto' or 'load' actions.
 
@@ -92,6 +102,24 @@ You can also specify that events happen on page load, by simply adding 'on load'
 
     #dialog should hide itself on load
 
+#### Animation and Interactions
+
+New: ShortHand.js will load additional modules for animation and interaction effects.
+
+Notably, animate.css and interact.js open source libraries are now supported. Simply use 'animate' as the directive such as:
+
+    #element should animate 'animationName' #targetElement on (event)
+
+For interact.js, where dragging and resizing are the primary interactions, a new 'should be' syntax is supported:
+
+    #dialog1 should be draggable
+
+    #dialog2 should be resizable
+
+    #dialog3 should be draggable and resizable
+
+Still to come is 'droppable' although that may prove more complex.
+
 ## License
 
 MIT.
@@ -118,16 +146,4 @@ I'd like to add a few things, and am open to contributions.
 #### Server-side generation of JavaScript from Shorthand statements.
 
 Ideally Shorthand could be run (via node.js) as part of a build script, and instead of evaluating statements and adding event handlers in-browser, the same statements could be used to generate an application skeleton of some kind.
-
-#### Animation and Transition Actions
-
-A library of simple canned animations useful for mockups? Yes please!
-
-These would go something like this:
-
-    #button1 should animate 'slideleftin' #panel1 on click
-
-    #button2 should animate 'slideleftout' #panel2 on click
-
-I'm still figuring out a good syntax for describing these...
 
