@@ -16,6 +16,11 @@
     font-size: 400%;
   }
 
+  .layer {
+    background-color: #bada55;
+    border: 5px solid black;
+  }
+
   div {
     margin: 1em;
   }
@@ -33,7 +38,7 @@
 
   <div id="abutton">toggle selected class on self</div>
 
-  <div id="header1">This is a header #header1</div>
+  <div id="header1">This is a header #header1 - click on me to animate the next section...</div>
   <div id="section1">This is a section</div>
 
   <h1>A Heading</h1>
@@ -48,7 +53,7 @@
   <div id="link1">goto test</div>
 
   <div id="ajax1">load chunk.html into #container1</div>
-  <div id="container1">container1</div>
+  <div id="container1" class="layer">container1</div>
 
   <div id="showhidden">Toggle Hidden</div>
   <div id="hideme">Hidden On Load</div>
@@ -63,9 +68,11 @@
   <!-- Shorthand blocks -->
   <script type="text/Shorthand">
 
-    #container1 should be draggable
+    #container1 should be draggable and resizeable
+    // #container1 should animate 'bounceInDown' self on click
+    // #container1 should be resizeable
 
-    #header1 should animate 'rotateIn' #section1 on click 
+    #header1 should animate 'bounceInDown' #section1 on click 
 
     #hideme should hide itself on load
     #section1 should hide itself on load

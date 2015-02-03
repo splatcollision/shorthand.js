@@ -154,7 +154,7 @@ See 'README.md' for more details.
 			var prepIdx = directive.indexOf(ShortHand.preposition);
 			var optionsIdx = directive.indexOf(ShortHand.optionword);
 			// find the main selector
-			var selector = directive.substring(0, verbIdx).trim(), action, interaction, actionOptions, target;
+			var selector = directive.substring(0, verbIdx).trim(), action, interaction, withOptions, target;
 
 			if (selector.indexOf('//') > -1) return; // support js style comments
 
@@ -162,7 +162,12 @@ See 'README.md' for more details.
 			if (prepIdx === -1) {
 				// alternate 'be' format of #selector should be draggable
 				action = directive.substring(verbIdx, directive.length).replace(ShortHand.verb.trim(), "").trim();
-				actionOptions = directive.substring(optionsIdx, directive.length);
+				
+				if (optionsIdx > -1) {
+					action = directive.substring(verbIdx, optionsIdx).replace(ShortHand.verb.trim(), "").trim();
+					withOptions = directive.substring(optionsIdx, directive.length).replace(ShortHand.optionword.trim(), "").trim();	
+				}
+				
 			} else {
 				// find the action & interaction
 				action = directive.substring(verbIdx, prepIdx).replace(ShortHand.verb.trim(), "").trim();	
@@ -177,7 +182,7 @@ See 'README.md' for more details.
 			console.log("selector:", selector);
 			console.log("should:", action);
 			console.log("interaction:", interaction);
-			console.log("options:", actionOptions);
+			console.log("options:", withOptions);
 			target = ShortHand.$(selector);
 
 			if (target.length === 0) {
@@ -185,7 +190,7 @@ See 'README.md' for more details.
 				return; 
 			}
 			// return an object containing the elements of a ShortHand directive.
-			return {full: directive, selector: selector, target: target, action: action, interaction: interaction}
+			return {full: directive, selector: selector, target: target, action: action, interaction: interaction, withOptions: withOptions}
 		});
 		console.log('directives:', this.directives);
 		// call the 'observe' method and return this object.
@@ -195,8 +200,7 @@ See 'README.md' for more details.
 	// 'observe()' - hook up event handlers according to parsed directives.
 	ShortHand.observe = function() {
 		this.$.each(this.directives, function(i, directive){
-			// add a pointer cursor so we know it's interactive!
-			directive.target.css('cursor', 'pointer');
+			directive.target.addClass('shorthand-interactive'); // maybe usable in the future...
 			// check for custom 'load' event
 			if (directive.interaction === 'load') {
 				// if it's a load event, we can just call the action right away.
@@ -206,12 +210,15 @@ See 'README.md' for more details.
 				directive.action = directive.action.replace('be', '').trim();
 				// if ShortHand.Actions[directive.action]
 				console.log('be type interaction:', directive.action, ShortHand.Actions[directive.action] );
-				if (ShortHand.Actions[directive.action]) {
+				// if (ShortHand.Actions[directive.action]) {
 					// directly call the action
-					// ShortHand.callback(directive, ShortHand.$(directive.selector));
-					ShortHand.Actions[directive.action].apply(ShortHand, [ShortHand.$(directive.selector), directive]);
-				}
+					ShortHand.callback(directive, ShortHand.$(directive.selector));
+					// ShortHand.Actions[directive.action].apply(ShortHand, [ShortHand.$(directive.selector), directive]);
+				// }
 			} else {
+				// add a pointer cursor so we know it's interactive!
+				directive.target.css('cursor', 'pointer');
+
 				// set up the event observer normally.
 				directive.target.on(directive.interaction, function(evt){
 					// callback gets the main directive object and the element which is source of the event (source selector)
@@ -244,7 +251,10 @@ See 'README.md' for more details.
 				return;
 			}
 			// unshift the origin of this callback so we can use 'self' keyword for actions.
-			args.unshift(origin);
+			
+			// args.unshift(origin);
+			// changed to contain both origin and source directive - useful for complex module handlers - referred to as 'args' in the callback
+			args.unshift({origin: origin, directive: directive});
 
 			// if target is always the last item in args maybe we can findTarget before calling the actions
 			// makes extending actions cleaner...
@@ -287,9 +297,9 @@ See 'README.md' for more details.
 			css: ["//cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css"]
 		},
 		actions: {
-			"animate": function(origin, animationName, target) {
-				console.log('testing animate:', origin, animationName, target);
-				target = this.findTarget(target, arguments);
+			"animate": function(args, animationName, target) {
+				console.log('testing animate:', args, animationName, target);
+				target = this.findTarget(target, args.origin);
 				var animClasses = 'animated ' + animationName.replace(/'/g, "");
 				// addClass animate + other thing
 				// oh repeatable heyyyy
@@ -310,11 +320,12 @@ See 'README.md' for more details.
 		},
 		// draggable "be draggable"
 		actions: {
-			"draggable": function(origin, directive) {
-				console.log('testing drag:', origin, directive);
+			// first argument changed to contain both origin and source directive object via .origin and .directive
+			"draggable": function(args, target) {
+				console.log('testing drag:', args, args.directive);
 				// target = this.findTarget(target, arguments);
 				if (!interact) return console.warn('no interact.js');
-				interact(directive.selector).draggable({
+				interact(args.directive.selector).draggable({
 					// call this function on every dragmove event
 					    onmove: function (event) {
 					      var target = event.target,
@@ -333,6 +344,25 @@ See 'README.md' for more details.
 					    }
 				});
 				
+			},
+			"resizeable": function(args, target) {
+				console.log('testing resize', args, args.directive);
+				if (!interact) return console.warn('no interact.js');
+				interact(args.directive.selector).resizable(true)
+				  .on('resizemove', function (event) {
+				  	console.log('resizemove:', event);
+				    var target = event.target;
+
+				    // add the change in coords to the previous width of the target element
+				    var newWidth  = parseFloat(target.style.width || target.clientWidth) + event.dx,
+				        newHeight = parseFloat(target.style.height || target.clientHeight) + event.dy;
+
+				    // update the element's style
+				    target.style.width  = newWidth + 'px';
+				    target.style.height = newHeight + 'px';
+
+				    // target.textContent = newWidth + '×' + newHeight;
+				  });
 			}
 		}
 		// drop zone "should be draggable with drop zone #target"
@@ -346,34 +376,34 @@ See 'README.md' for more details.
 	// a default set of basic actions.
 	ShortHand.Actions.hide = function(origin, target) {
 		// convert arguments to an array?
-		target = this.findTarget(target, arguments); // handle 'next p' and 'self' issues here.
+		target = this.findTarget(target, origin.origin); // handle 'next p' and 'self' issues here.
 		target.hide();
 	}
 
 	ShortHand.Actions.show = function(origin, target) {
-		target = this.findTarget(target, arguments); 
+		target = this.findTarget(target, origin.origin); 
 		target.show();
 	}
 
 	ShortHand.Actions.toggle = function(origin, target) {
-		target = this.findTarget(target, arguments);
+		target = this.findTarget(target, origin.origin);
 		target.toggle();
 	}
 
 	ShortHand.Actions.addclass = function(origin, className, target) {
-		target = this.findTarget(target, arguments); 
+		target = this.findTarget(target, origin.origin); 
 		console.log('addclass:', target, className);
 		target.addClass(className.replace(/'/g, ""));
 	}
 
 	ShortHand.Actions.removeclass = function(origin, className, target) {
-		target = this.findTarget(target, arguments); 
+		target = this.findTarget(target, origin.origin); 
 		console.log('removeclass:', target, className);
 		target.removeClass(className.replace(/'/g, ""));
 	}
 
 	ShortHand.Actions.toggleclass = function(origin, className, target) {
-		target = this.findTarget(target, arguments); 
+		target = this.findTarget(target, origin.origin); 
 		target.toggleClass(className.replace(/'/g, ""));
 	}
 
@@ -384,7 +414,7 @@ See 'README.md' for more details.
 
 	// load 'path' into (selector)
 	ShortHand.Actions.load = function(origin, url, insertion, target) {
-		target = this.findTarget(target, arguments);
+		target = this.findTarget(target, origin.origin);
 		// insertion is only 'into' and we don't do anything yet with it - but could use before or after perhaps
 		// console.log('load action:', target, url, insertion);
 		url = url.replace(/'/g, "");
